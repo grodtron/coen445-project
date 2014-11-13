@@ -1,19 +1,19 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 
-import coen445.project.common.registration.IRegistrationMessage.OpCodes;
+import coen445.project.common.udp.IUdpMessage.OpCodes;
 
 public class RegistrationMessageFactory {
 
-	private final IRegistrationContext context;
+	private final IUdpContext context;
 	
-	public RegistrationMessageFactory(IRegistrationContext context){
+	public RegistrationMessageFactory(IUdpContext context){
 		this.context = context;
 	}
 	
-	public IRegistrationMessage createMessage(DatagramPacket packet){
+	public IUdpMessage createMessage(DatagramPacket packet){
 		
 		byte [] data              = packet.getData();
 		InetSocketAddress address = (InetSocketAddress) packet.getSocketAddress();
@@ -31,6 +31,8 @@ public class RegistrationMessageFactory {
 			return new RegisteredMessage(context, data, address);
 		case UNREGISTER:
 			return new UnregisteredMessage(context, data, address);
+		case OFFER:
+			return new OfferMessage(context, data, address);
 		default: case UNKNOWN:
 			return new UnknownMessage(context);
 		}

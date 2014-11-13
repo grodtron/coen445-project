@@ -1,8 +1,9 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 
-public class DeregDeniedMessage extends IRegistrationMessage {
+public class DeregDeniedMessage extends IUdpMessage {
 
 	public static enum Reason {
 		NONE,
@@ -24,7 +25,7 @@ public class DeregDeniedMessage extends IRegistrationMessage {
 	int requestNumber;
 	Reason reason;
 	
-	public DeregDeniedMessage(IRegistrationContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregDeniedMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		requestNumber = rawdata[1];
 		reason        = Reason.get(rawdata[2]);
@@ -36,14 +37,14 @@ public class DeregDeniedMessage extends IRegistrationMessage {
 		this(
 				msg.context,
 				new byte[]{
-					(byte)IRegistrationMessage.OpCodes.DEREG_DENIED.ordinal(),
+					(byte)IUdpMessage.OpCodes.DEREG_DENIED.ordinal(),
 					(byte)msg.getRequestNumber(), 
 					(byte)reason.ordinal()},
 				msg.address);
 	}
 
 	@Override
-	public IRegistrationMessage onReceive() {
+	public Collection<? extends IUdpMessage> onReceive() {
 		return context.process(this);
 	}
 

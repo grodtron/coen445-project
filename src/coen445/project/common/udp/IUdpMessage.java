@@ -1,8 +1,9 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 
-public abstract class IRegistrationMessage {
+public abstract class IUdpMessage {
 
 	public static enum OpCodes {
 		DEREG_CONF,
@@ -26,19 +27,19 @@ public abstract class IRegistrationMessage {
 		}
 	}
 	
-	protected IRegistrationContext context;
+	protected IUdpContext context;
 	
 	protected byte [] data;
 	
 	protected final InetSocketAddress address;
 	
-	public IRegistrationMessage(IRegistrationContext context, byte [] data, InetSocketAddress address){
+	public IUdpMessage(IUdpContext context, byte [] data, InetSocketAddress address){
 		this.context = context;
 		this.data    = data;
 		this.address = address;
 	}
 	
-	public abstract IRegistrationMessage onReceive();
+	public abstract Collection<? extends IUdpMessage> onReceive();
 	
 	public byte [] getData(){
 		return data;

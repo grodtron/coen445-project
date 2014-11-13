@@ -1,4 +1,4 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -6,14 +6,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collection;
 
-public class RegisteredMessage extends IRegistrationMessage {
+public class RegisterMessage extends IUdpMessage {
 
 	private int requestNumber;
 	private String name;
-	private SocketAddress registeredAddress;
+	private SocketAddress assertedAddress;
 		
-	public RegisteredMessage(IRegistrationContext context, byte[] rawdata, InetSocketAddress address) {
+	public RegisterMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		
 		// Get the request number
@@ -23,7 +24,7 @@ public class RegisteredMessage extends IRegistrationMessage {
 		// the most convenient method for Java.
 		int nameBegin   = 3;
 		int nameLength  = rawdata[2];
-		name            = new String(rawdata, 3, rawdata[2]);
+		name            = new String(rawdata, nameBegin, nameLength);
 		
 		// Retrieve the IP Address. It is the next 4 bytes after the string
 		// ends
@@ -41,24 +42,40 @@ public class RegisteredMessage extends IRegistrationMessage {
 		int portEnd    = ipAddrEnd + 1;
 		int port       = ((0xff & rawdata[portBegin]) << 8) | (0xff & rawdata[portEnd]);
 				
-		registeredAddress = new InetSocketAddress(ipAddress, port);
+		assertedAddress = new InetSocketAddress(ipAddress, port);
 		
-		System.out.println("Created Registered message: " + this);
-	}
-	
-	public RegisteredMessage(RegisterMessage msg){
-		this(msg.context, Arrays.copyOf(msg.getData(), msg.getData().length), msg.getAddress());
-		data[0] = (byte)IRegistrationMessage.OpCodes.REGISTERED.ordinal();
+		// resize the buffer to the actual size of the data. This is done cause other messages
+		// (registered, for example) just copy this messages buffer instead of rebuilding it themselves
+		int bufferEnd = portEnd + 1;
+		data = Arrays.copyOfRange(rawdata, 0, bufferEnd);
+		
+		System.out.println("Created Register message: " + this);
 	}
 
 	@Override
-	public IRegistrationMessage onReceive() {
+	public Collection<? extends IUdpMessage> onReceive() {
 		return context.process(this);
 	}
 	
 	@Override
 	public String toString(){
-		return requestNumber + " " + name + " " + registeredAddress;
+		return requestNumber + " " + name + " " + assertedAddress;
 	}
-	
+
+	public int getRequestNumber() {
+		return requestNumber;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public SocketAddress getAssertedAddress() {
+		return assertedAddress;
+	}
+
+	public byte[] getData() {
+		return data;
+	}
+
 }

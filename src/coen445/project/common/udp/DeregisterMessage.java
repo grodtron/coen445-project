@@ -1,18 +1,19 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collection;
 
-public class DeregisterMessage extends IRegistrationMessage {
+public class DeregisterMessage extends IUdpMessage {
 
 	private int requestNumber;
 	private String name;
 	private InetAddress ipAddress;
 	
-	public DeregisterMessage(IRegistrationContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregisterMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		
 		// Get the request number
@@ -39,7 +40,7 @@ public class DeregisterMessage extends IRegistrationMessage {
 	}
 
 	@Override
-	public IRegistrationMessage onReceive() {
+	public Collection<? extends IUdpMessage> onReceive() {
 		return context.process(this);
 	}
 	

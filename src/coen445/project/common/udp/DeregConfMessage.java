@@ -1,12 +1,13 @@
-package coen445.project.common.registration;
+package coen445.project.common.udp;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 
-public class DeregConfMessage extends IRegistrationMessage {
+public class DeregConfMessage extends IUdpMessage {
 
 	private int requestNumber;
 	
-	public DeregConfMessage(IRegistrationContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregConfMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		requestNumber = rawdata[1];
 		
@@ -17,13 +18,13 @@ public class DeregConfMessage extends IRegistrationMessage {
 		this(
 			msg.context,
 			new byte[]{
-				(byte)IRegistrationMessage.OpCodes.DEREG_CONF.ordinal(),
+				(byte)IUdpMessage.OpCodes.DEREG_CONF.ordinal(),
 				(byte)msg.getRequestNumber() },
 			msg.getAddress() );
 	}
 
 	@Override
-	public IRegistrationMessage onReceive() {
+	public Collection<? extends IUdpMessage> onReceive() {
 		return context.process(this);
 	}
 
