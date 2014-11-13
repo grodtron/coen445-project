@@ -2,6 +2,7 @@ package coen445.project.common.registration;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
@@ -11,8 +12,8 @@ public class DeregisterMessage extends IRegistrationMessage {
 	private String name;
 	private InetAddress ipAddress;
 	
-	public DeregisterMessage(IRegistrationContext context, byte[] rawdata) {
-		super(context, rawdata);
+	public DeregisterMessage(IRegistrationContext context, byte[] rawdata, InetSocketAddress address) {
+		super(context, rawdata, address);
 		
 		// Get the request number
 		requestNumber = (int)rawdata[1];
@@ -40,6 +41,18 @@ public class DeregisterMessage extends IRegistrationMessage {
 	@Override
 	public IRegistrationMessage onReceive() {
 		return context.process(this);
+	}
+	
+	public String getName(){
+		return name;
+	}
+	
+	public InetAddress getAssertedIpAddress(){
+		return ipAddress;
+	}
+	
+	public int getRequestNumber(){
+		return requestNumber;
 	}
 	
 	@Override

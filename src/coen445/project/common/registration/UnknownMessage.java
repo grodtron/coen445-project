@@ -1,9 +1,10 @@
 package coen445.project.common.registration;
 
+
 public class UnknownMessage extends IRegistrationMessage {
 
 	public UnknownMessage(IRegistrationContext context) {
-		super(context, rawdata);
+		super(context, null, null);
 		System.out.println("Created new UNKNOWN message");
 	}
 

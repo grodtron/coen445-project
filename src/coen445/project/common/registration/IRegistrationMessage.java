@@ -1,5 +1,7 @@
 package coen445.project.common.registration;
 
+import java.net.InetSocketAddress;
+
 public abstract class IRegistrationMessage {
 
 	public static enum OpCodes {
@@ -9,6 +11,9 @@ public abstract class IRegistrationMessage {
 		REGISTERED,
 		REGISTER,
 		UNREGISTER,
+		OFFER,
+		OFFER_CONF,
+		NEW_ITEM,
 		UNKNOWN;
 		
 		public static OpCodes get(byte b){
@@ -25,15 +30,22 @@ public abstract class IRegistrationMessage {
 	
 	protected byte [] data;
 	
-	public IRegistrationMessage(IRegistrationContext context, byte [] data){
+	protected final InetSocketAddress address;
+	
+	public IRegistrationMessage(IRegistrationContext context, byte [] data, InetSocketAddress address){
 		this.context = context;
-		this.data = data;
+		this.data    = data;
+		this.address = address;
 	}
 	
 	public abstract IRegistrationMessage onReceive();
 	
 	public byte [] getData(){
 		return data;
+	}
+	
+	public InetSocketAddress getAddress(){
+		return address;
 	}
 	
 }

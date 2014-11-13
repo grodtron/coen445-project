@@ -59,15 +59,23 @@ public class RegistrationServer implements Runnable {
 			DatagramPacket receivedPacket = receivePacket();
 			
 			if(receivedPacket != null){
-				IRegistrationMessage message = factory.createMessage(receivedPacket.getData());
+				IRegistrationMessage message  = factory.createMessage(receivedPacket);
 				IRegistrationMessage response = message.onReceive();
 				
 				if(response != null){
-					DatagramPacket sentPacket;
 					byte [] data = response.getData();
 					
-					// TODO
-					sentPacket = new DatagramPacket(data, data.length, resp, port);
+					try {
+						DatagramPacket packetToSend = new DatagramPacket(data, data.length, response.getAddress());
+						try {
+							socket.send(packetToSend);
+						} catch (IOException e) {
+							System.err.println("Could not send response DatagramPacket: " + e);
+						}
+					} catch (SocketException e) {
+						System.err.println("Could not create DatagramPacket to send: " + e);
+					}
+					
 				}
 			}
 		}
