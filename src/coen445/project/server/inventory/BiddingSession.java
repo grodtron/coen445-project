@@ -39,7 +39,7 @@ public class BiddingSession implements Runnable {
 			}
 			
 			if(length > 0){
-				System.out.println("received \"  \"" + new String(buffer, 0, length));
+				System.out.println("received \"" + new String(buffer, 0, length) + "\"");
 				try {
 					output.write(Thread.currentThread().getName().getBytes());
 					output.flush();
@@ -47,6 +47,9 @@ public class BiddingSession implements Runnable {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+			}else{
+				System.out.println("Read 0 or less bytes, it's over");
+				break;
 			}
 			
 		}
