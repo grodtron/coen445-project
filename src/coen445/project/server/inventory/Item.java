@@ -54,13 +54,13 @@ public class Item implements Runnable{
 							Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
 						}else{
 							if(biddingSession.getUser().equals(highBidder)){
-								biddingSession.addToOutbox(new WinMessage());
+								biddingSession.addToOutbox(new WinMessage(socket.getLocalPort(), sellingUser, Registrar.instance.getAddress(sellingUser), currentBid));
 							}else{
-								biddingSession.addToOutbox(new BidOverMessage());
+								biddingSession.addToOutbox(new BidOverMessage(socket.getLocalPort(), currentBid));
 							}
 							
 							if(biddingSession.getUser().equals(sellingUser)){
-								biddingSession.addToOutbox(new SoldtoMessage());
+								Registrar.instance.informUser(sellingUser, new SoldtoMessage(socket.getLocalPort(), highBidder, Registrar.instance.getAddress(sellingUser), currentBid));
 							}
 							
 							biddingSession.close();

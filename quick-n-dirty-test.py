@@ -1,5 +1,10 @@
 import socket
 
+from sys import argv
+
+localport = int(argv[1])
+username = argv[2]
+
 udpsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -7,16 +12,17 @@ serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-udpsock.bind(('localhost', 55655))
-tcpsock.bind(('localhost', 55655))
-serversock.bind(('localhost', 55655))
+udpsock.bind(('localhost', localport))
+tcpsock.bind(('localhost', localport))
+serversock.bind(('localhost', localport))
 
 serversock.listen(1)
 
 
 address = ('localhost', 12358)
-register = b'\x04\x00\x06Gordon\x7f\x00\x00\x01\xd9\x67'
-offer    = b'\x06\x00\x06Gordon\x7f\x00\x00\x01\tSome Shit\x00\n'
+
+register = b'\x04\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01' + chr(int(hex(localport)[2:4],16)) + chr(int(hex(localport)[4:6],16))
+offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01\tSome Shit\x00\n'
 
 udpsock.sendto(register, address)
 udpsock.recv(1024)
