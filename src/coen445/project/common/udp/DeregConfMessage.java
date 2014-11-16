@@ -3,11 +3,11 @@ package coen445.project.common.udp;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-public class DeregConfMessage extends IUdpMessage {
+public class DeregConfMessage extends UdpMessage {
 
 	private int requestNumber;
 	
-	public DeregConfMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregConfMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		requestNumber = rawdata[1];
 		
@@ -18,13 +18,13 @@ public class DeregConfMessage extends IUdpMessage {
 		this(
 			msg.context,
 			new byte[]{
-				(byte)IUdpMessage.OpCodes.DEREG_CONF.ordinal(),
+				(byte)UdpMessage.OpCodes.DEREG_CONF.ordinal(),
 				(byte)msg.getRequestNumber() },
 			msg.getAddress() );
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 

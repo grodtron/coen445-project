@@ -7,11 +7,11 @@ public class Inventory {
 	public Inventory(){
 	}
 	
-	public int addItem(String description, int startingBid){
+	public int addItem(String description, String user, int startingBid){
 								
 		Item item;
 		try {
-			item = new Item(description, startingBid);
+			item = new Item(description, user, startingBid);
 		} catch (IOException e) {
 			System.err.println("Couldn't create new Item: " + e);
 			return -3;

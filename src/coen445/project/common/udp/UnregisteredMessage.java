@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 
 
-public class UnregisteredMessage extends IUdpMessage {
+public class UnregisteredMessage extends UdpMessage {
 
 	public static enum Reason {
 		NONE,
@@ -25,7 +25,7 @@ public class UnregisteredMessage extends IUdpMessage {
 	private int requestNumber;
 	private Reason reason;
 		
-	public UnregisteredMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public UnregisteredMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		requestNumber = rawdata[1];
 		reason        = Reason.get(rawdata[2]);
@@ -43,7 +43,7 @@ public class UnregisteredMessage extends IUdpMessage {
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 }

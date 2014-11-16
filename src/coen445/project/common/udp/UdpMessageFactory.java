@@ -3,17 +3,17 @@ package coen445.project.common.udp;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 
-import coen445.project.common.udp.IUdpMessage.OpCodes;
+import coen445.project.common.udp.UdpMessage.OpCodes;
 
-public class RegistrationMessageFactory {
+public class UdpMessageFactory {
 
-	private final IUdpContext context;
+	private final UdpContext context;
 	
-	public RegistrationMessageFactory(IUdpContext context){
+	public UdpMessageFactory(UdpContext context){
 		this.context = context;
 	}
 	
-	public IUdpMessage createMessage(DatagramPacket packet){
+	public UdpMessage createMessage(DatagramPacket packet){
 		
 		byte [] data              = packet.getData();
 		InetSocketAddress address = (InetSocketAddress) packet.getSocketAddress();

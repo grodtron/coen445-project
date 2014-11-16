@@ -3,7 +3,7 @@ package coen445.project.common.udp;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-public class DeregDeniedMessage extends IUdpMessage {
+public class DeregDeniedMessage extends UdpMessage {
 
 	public static enum Reason {
 		NONE,
@@ -25,7 +25,7 @@ public class DeregDeniedMessage extends IUdpMessage {
 	int requestNumber;
 	Reason reason;
 	
-	public DeregDeniedMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregDeniedMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		requestNumber = rawdata[1];
 		reason        = Reason.get(rawdata[2]);
@@ -37,14 +37,14 @@ public class DeregDeniedMessage extends IUdpMessage {
 		this(
 				msg.context,
 				new byte[]{
-					(byte)IUdpMessage.OpCodes.DEREG_DENIED.ordinal(),
+					(byte)UdpMessage.OpCodes.DEREG_DENIED.ordinal(),
 					(byte)msg.getRequestNumber(), 
 					(byte)reason.ordinal()},
 				msg.address);
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 

@@ -6,16 +6,16 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.Collection;
 
-import coen445.project.common.udp.IUdpContext;
-import coen445.project.common.udp.IUdpMessage;
-import coen445.project.common.udp.RegistrationMessageFactory;
+import coen445.project.common.udp.UdpContext;
+import coen445.project.common.udp.UdpMessage;
+import coen445.project.common.udp.UdpMessageFactory;
 
-public class UdpServer implements Runnable {
+public class RegisterAndOfferServer implements Runnable {
 
 	private DatagramSocket socket;
 
-	private IUdpContext context;
-	private RegistrationMessageFactory factory;
+	private UdpContext context;
+	private UdpMessageFactory factory;
 	
 	private static DatagramSocket createSocket(int port){
 		DatagramSocket sock = null;
@@ -31,10 +31,10 @@ public class UdpServer implements Runnable {
 		return sock;
 	}
 	
-	public UdpServer(int port){
+	public RegisterAndOfferServer(int port){
 		socket = createSocket(port);
-		context = new UdpContext(null/* TODO */);
-		factory = new RegistrationMessageFactory(context);
+		context = new RegisterAndOfferServerContext(null/* TODO */);
+		factory = new UdpMessageFactory(context);
 	}
 		
 	private DatagramPacket receivePacket(){
@@ -60,11 +60,11 @@ public class UdpServer implements Runnable {
 			DatagramPacket receivedPacket = receivePacket();
 			
 			if(receivedPacket != null){
-				IUdpMessage message  = factory.createMessage(receivedPacket);
-				Collection<? extends IUdpMessage> responses = message.onReceive();
+				UdpMessage message  = factory.createMessage(receivedPacket);
+				Collection<? extends UdpMessage> responses = message.onReceive();
 				
 				if(responses != null){
-					for (IUdpMessage response : responses) {
+					for (UdpMessage response : responses) {
 						byte [] data = response.getData();
 						
 						try {

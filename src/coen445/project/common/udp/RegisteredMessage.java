@@ -8,13 +8,13 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class RegisteredMessage extends IUdpMessage {
+public class RegisteredMessage extends UdpMessage {
 
 	private int requestNumber;
 	private String name;
 	private SocketAddress registeredAddress;
 		
-	public RegisteredMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public RegisteredMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		
 		// Get the request number
@@ -49,11 +49,11 @@ public class RegisteredMessage extends IUdpMessage {
 	
 	public RegisteredMessage(RegisterMessage msg){
 		this(msg.context, Arrays.copyOf(msg.getData(), msg.getData().length), msg.getAddress());
-		data[0] = (byte)IUdpMessage.OpCodes.REGISTERED.ordinal();
+		data[0] = (byte)UdpMessage.OpCodes.REGISTERED.ordinal();
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 	

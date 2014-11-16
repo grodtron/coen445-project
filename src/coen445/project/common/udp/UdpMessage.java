@@ -3,7 +3,7 @@ package coen445.project.common.udp;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-public abstract class IUdpMessage {
+public abstract class UdpMessage {
 
 	public static enum OpCodes {
 		DEREG_CONF,
@@ -27,19 +27,19 @@ public abstract class IUdpMessage {
 		}
 	}
 	
-	protected IUdpContext context;
+	protected UdpContext context;
 	
 	protected byte [] data;
 	
 	protected final InetSocketAddress address;
 	
-	public IUdpMessage(IUdpContext context, byte [] data, InetSocketAddress address){
+	public UdpMessage(UdpContext context, byte [] data, InetSocketAddress address){
 		this.context = context;
 		this.data    = data;
 		this.address = address;
 	}
 	
-	public abstract Collection<? extends IUdpMessage> onReceive();
+	public abstract Collection<? extends UdpMessage> onReceive();
 	
 	public byte [] getData(){
 		return data;

@@ -2,7 +2,7 @@ package coen445.project.common.udp;
 
 import java.util.Collection;
 
-public class OfferConfMessage extends IUdpMessage {
+public class OfferConfMessage extends UdpMessage {
 
 	
 	
@@ -16,7 +16,7 @@ public class OfferConfMessage extends IUdpMessage {
 		
 		data = new byte[1 + 1 + 2 + description.length + 1 + 2];
 		
-		data[0] = (byte)IUdpMessage.OpCodes.OFFER_CONF.ordinal();
+		data[0] = (byte)UdpMessage.OpCodes.OFFER_CONF.ordinal();
 		data[1] = (byte)msg.getRequestNumber();
 		data[2] = (byte)(itemId >> 8);
 		data[3] = (byte)itemId;
@@ -30,7 +30,7 @@ public class OfferConfMessage extends IUdpMessage {
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 

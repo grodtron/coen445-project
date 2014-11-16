@@ -7,54 +7,53 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import coen445.project.common.tcp.NewItemMessage;
 import coen445.project.common.udp.DeregConfMessage;
 import coen445.project.common.udp.DeregDeniedMessage;
 import coen445.project.common.udp.DeregisterMessage;
-import coen445.project.common.udp.IUdpContext;
-import coen445.project.common.udp.IUdpMessage;
-import coen445.project.common.udp.NewItemMessage;
 import coen445.project.common.udp.OfferConfMessage;
 import coen445.project.common.udp.OfferMessage;
 import coen445.project.common.udp.RegisterMessage;
 import coen445.project.common.udp.RegisteredMessage;
+import coen445.project.common.udp.UdpContext;
+import coen445.project.common.udp.UdpMessage;
 import coen445.project.common.udp.UnregisteredMessage;
 import coen445.project.server.inventory.Inventory;
+import coen445.project.server.registration.Registrar;
 
-public class UdpContext extends IUdpContext {
-
-	private Map<String, InetSocketAddress> registrations;
+public class RegisterAndOfferServerContext extends UdpContext {
 	
 	private final Inventory inventory;
 	
-	public UdpContext(File persistedFile){
-		registrations = new HashMap<String, InetSocketAddress>();
+	public RegisterAndOfferServerContext(File persistedFile){
 		inventory     = new Inventory();
 	}
 	
 	@Override
-	public Collection<? extends IUdpMessage> process(RegisterMessage msg){
+	public Collection<? extends UdpMessage> process(RegisterMessage msg){
 		String name = msg.getName();
 		
-		if(registrations.containsKey(name)){
+		if(Registrar.instance.isRegistered(name)){
 			return Collections.singleton(new UnregisteredMessage(msg, UnregisteredMessage.Reason.DUPLICATE_NAME));
 		}else
 		if( ! msg.getAddress().equals(msg.getAssertedAddress())){
 			return Collections.singleton(new UnregisteredMessage(msg, UnregisteredMessage.Reason.ADDRESS_MISMATCH));
 		}else{
-			registrations.put(name, msg.getAddress());
-			return Collections.singleton(new RegisteredMessage(msg));
+			if(Registrar.instance.register(name, msg.getAddress())){
+				return Collections.singleton(new RegisteredMessage(msg));
+			}else{
+				return Collections.emptySet();
+			}
 		}
 	}
 	
 	@Override
-	public Collection<? extends IUdpMessage> process(DeregisterMessage msg){
+	public Collection<? extends UdpMessage> process(DeregisterMessage msg){
 		String name = msg.getName();
 		
-		SocketAddress registeredAddress = registrations.get(name);
+		SocketAddress registeredAddress = Registrar.instance.getAddress(name);
 		
 		if(registeredAddress == null){
 			return Collections.singleton(new DeregDeniedMessage(msg, DeregDeniedMessage.Reason.NOT_REGISTERED));
@@ -66,18 +65,18 @@ public class UdpContext extends IUdpContext {
 		if( ! registeredAddress.equals(msg.getAddress()) ){
 			return Collections.singleton(new DeregDeniedMessage(msg, DeregDeniedMessage.Reason.NOT_REGISTERED_AT_ADDRESS));
 		}else{
-			registrations.remove(name);
+			Registrar.instance.remove(name);
 			return Collections.singleton(new DeregConfMessage(msg));
 		}
 	}
 	
 	@Override
-	public Collection<IUdpMessage> process(OfferMessage msg){
+	public Collection<UdpMessage> process(OfferMessage msg){
 		
 		String name                         = msg.getName();
 		InetAddress assertedIp              = msg.getAssertedIpAddress();
 		InetSocketAddress receivedAddress   = msg.getAddress();
-		InetSocketAddress registeredAddress = registrations.get(name);
+		InetSocketAddress registeredAddress = Registrar.instance.getAddress(name);
 		
 		if( registeredAddress == null ){
 			System.out.println("Registered address is NULL");
@@ -91,18 +90,14 @@ public class UdpContext extends IUdpContext {
 			System.out.println("Registered address != assertedIp");
 			return null;
 		}else{
-			int itemId = inventory.addItem(msg.getDescription(), msg.getMinimum());
+			int itemId = inventory.addItem(msg.getDescription(), msg.getName(), msg.getMinimum());
 			if(itemId >= 0){
-				List<IUdpMessage> messages = new ArrayList<IUdpMessage>();
+				List<UdpMessage> messages = new ArrayList<UdpMessage>();
 				// Confirm the item to the user posting it
 				messages.add(new OfferConfMessage(msg, itemId));
 				
 				// Advertise it to all other registered users
-				for(String user : registrations.keySet()){
-					if(! user.equals(name) ){
-						messages.add(new NewItemMessage(msg, itemId, registrations.get(user)));
-					}
-				}
+				Registrar.instance.informAll(new NewItemMessage(msg, itemId, msg.getAddress()));
 				
 				return messages;
 			}

@@ -7,7 +7,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class OfferMessage extends IUdpMessage {
+public class OfferMessage extends UdpMessage {
 
 	private int requestNumber;
 	private String name;
@@ -15,7 +15,7 @@ public class OfferMessage extends IUdpMessage {
 	private String description;
 	private int minimum;
 	
-	public OfferMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public OfferMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		
 		requestNumber = (int) data[1];
@@ -55,7 +55,7 @@ public class OfferMessage extends IUdpMessage {
 	}
 	
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 

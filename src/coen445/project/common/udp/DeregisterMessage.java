@@ -7,13 +7,13 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class DeregisterMessage extends IUdpMessage {
+public class DeregisterMessage extends UdpMessage {
 
 	private int requestNumber;
 	private String name;
 	private InetAddress ipAddress;
 	
-	public DeregisterMessage(IUdpContext context, byte[] rawdata, InetSocketAddress address) {
+	public DeregisterMessage(UdpContext context, byte[] rawdata, InetSocketAddress address) {
 		super(context, rawdata, address);
 		
 		// Get the request number
@@ -40,7 +40,7 @@ public class DeregisterMessage extends IUdpMessage {
 	}
 
 	@Override
-	public Collection<? extends IUdpMessage> onReceive() {
+	public Collection<? extends UdpMessage> onReceive() {
 		return context.process(this);
 	}
 	

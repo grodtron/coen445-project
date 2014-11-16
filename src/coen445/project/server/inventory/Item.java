@@ -9,22 +9,36 @@ import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import coen445.project.common.tcp.BidOverMessage;
+import coen445.project.common.tcp.NewItemMessage;
+import coen445.project.common.tcp.SoldtoMessage;
+import coen445.project.common.tcp.TcpMessage;
+import coen445.project.common.tcp.WinMessage;
+import coen445.project.server.registration.Registrar;
+import coen445.project.server.registration.UserNotFoundException;
+
 
 public class Item implements Runnable{
 
 	private final String description;
-	private final int currentBid;
 	
+	private String highBidder;
+	private int currentBid;
+	
+	private final String sellingUser;
+
 	private final ServerSocket socket;
 	
-	private Collection<Thread> biddingThreads;
+	private Collection<BiddingSession> biddingSessions;
 	
-	public Item(String description, int startingBid) throws IOException{
+	public Item(String description, String sellingUser, int startingBid) throws IOException{
 		this.description = description;
 		this.socket      = new ServerSocket(0);
-		this.currentBid  = startingBid;
+		this.currentBid  = startingBid - 1; // because the starting bid itself is also acceptable
+		this.highBidder  = null;
+		this.sellingUser = sellingUser;
 		
-		biddingThreads = new ArrayList<Thread>();
+		biddingSessions = new ArrayList<BiddingSession>();
 	}
 
 	@Override
@@ -35,19 +49,35 @@ public class Item implements Runnable{
 				System.out.println("Removing Item with port #" + socket.getLocalPort());
 				
 				synchronized(Item.this){
-					for (Thread biddingThread : Item.this.biddingThreads) {
-						biddingThread.interrupt();
+					for (BiddingSession biddingSession : Item.this.biddingSessions) {
+						if(highBidder == null){
+							Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
+						}else{
+							if(biddingSession.getUser().equals(highBidder)){
+								biddingSession.addToOutbox(new WinMessage());
+							}else{
+								biddingSession.addToOutbox(new BidOverMessage());
+							}
+							
+							if(biddingSession.getUser().equals(sellingUser)){
+								biddingSession.addToOutbox(new SoldtoMessage());
+							}
+							
+							biddingSession.close();
+						}
 					}
 					
-					try {
-						Item.this.socket.close();
-						biddingThreads = null;
-					} catch (IOException e) {
-						System.err.println("Couldn't close Item server socket: " + e);
+					if(highBidder == null){
+						try {
+							Item.this.socket.close();
+							biddingSessions = null;
+						} catch (IOException e) {
+							System.err.println("Couldn't close Item server socket: " + e);
+						}
 					}
 				}
 			}
-		}, 1 * 60 * 1000);
+		}, 2 * 60 * 1000);
 		
 		while(true){
 			Socket sock;
@@ -62,12 +92,17 @@ public class Item implements Runnable{
 			}
 			
 			synchronized(this){
-				if(biddingThreads != null){
-					// TODO keep track of these somehow
-					Thread biddingThread = new Thread(new BiddingSession(sock, this));
-					
-					biddingThreads.add(biddingThread);
-					biddingThread.start();
+				if(biddingSessions != null){
+					BiddingSession biddingSession;
+					try {
+						biddingSession = new BiddingSession(sock, this);
+					} catch (UserNotFoundException e) {
+						System.err.println("WARNING: couldn't find user: " + e);
+						break;
+					}
+
+					biddingSessions.add(biddingSession);
+					new Thread(biddingSession).start();
 				}else{
 					break;
 				}
@@ -77,5 +112,24 @@ public class Item implements Runnable{
 
 	public int getId() {
 		return socket.getLocalPort();
+	}
+
+	public boolean bid(String user, int amount) {
+		synchronized(this){
+			if(amount > currentBid){
+				currentBid = amount;
+				highBidder = user;
+				return true;
+			}else{
+				return false;
+			}
+		}
+	}
+
+	public void broadcast(TcpMessage msg) {
+		for(BiddingSession biddingSession : biddingSessions){
+			biddingSession.addToOutbox(msg);
+		}
+		
 	}
 }
