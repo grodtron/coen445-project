@@ -32,7 +32,8 @@ conn, client = serversock.accept()
 udpsock.sendto(offer, address)
 offerconf = udpsock.recv(1024)
 
-port = ((0xff & ord(offerconf[2])) << 8) | (0xff & ord(offerconf[3]))
+#port = ((0xff & ord(offerconf[2])) << 8) | (0xff & ord(offerconf[3]))
+port = 256*ord(offerconf[2]) + ord(offerconf[3])
 
 tcpsock.connect(('localhost', port))
 
