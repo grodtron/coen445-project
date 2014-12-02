@@ -15,3 +15,11 @@ TCP MESSAGES:
 2		WIN,
 3		BID_OVER,
 4		SOLDTO
+
+from client import *
+
+********
+* BUGS *
+********
+
+- If client offers item then deregisters, server lets him.
