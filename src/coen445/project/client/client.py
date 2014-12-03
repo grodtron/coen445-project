@@ -38,12 +38,12 @@ address = ('localhost', 12358)
 
 auction = []
 # example of adding an item 
-    # car = {"port" : 14533, "current_bid": 10, "client_bid": 10}
-    # auction.append(car)
+    # auction.append([$description,$port,$current_bid,$client_bid])
 loop = True
 mutex = Lock()
+auction_mutex = Lock()
 
-def register_client():
+def register():
     register = b'\x04\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01' + chr(int(hex(localport)[2:][-4:-2],16)) + chr(int(hex(localport)[2:][-2:],16))
     with mutex:
         udpsock.sendto(register, address)
@@ -59,7 +59,7 @@ def register_client():
         serversock.settimeout(10)
         return serversock.accept()
 
-def deregister_client():
+def deregister():
     register = b'\x02\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01' + chr(int(hex(localport)[2:4],16)) + chr(int(hex(localport)[4:6],16))
     udpsock.sendto(register, address)
 
@@ -75,19 +75,43 @@ def deregister_client():
             print "Error while deregistering."
             print e
 
-def offer_item(item,price):
+def offer(item,price):
     offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01'+ chr(len(item)) +item+chr(int(hex(price),16))+'\n'
-    udpsock.sendto(offer, address)
-    offerconf = udpsock.recv(1024)
+    with mutex:
+        udpsock.sendto(offer, address)
+        offerconf = udpsock.recv(1024)
     port = 256*ord(offerconf[2]) + ord(offerconf[3])
-    return port
+    with auction_mutex:
+        auction.append([item,port,price,0])
+    return True
 
-def bid_item(item):
-    print "Place holder"
+def bid(item, price):
+    for i in range(len(auction)):
+        if auction[i][0] == item:
+            tcpsock.connect(('localhost',auction[i][1]))
+            with auction_mutex:
+                tcpsock.send(b"\x00\0\0\0\0\0\0")
+                try:
+                    print repr(tcpsock.recv(100))
+                except Exception as e:
+                    print "Error in bidding"
+                    print e
+                    return False
+            with mutex:
+                auction[i][2] = price
+                auction[i][3] = price
+            return True
+
+def remove(item):
+    for i in range(len(auction)):
+        if auction[i][0] == item:
+            with auction_mutex:
+                auction.pop(i)
+            return True
 
 try:
     # client is the server's response variable 'address'
-    conn, client = register_client()
+    conn, client = register()
 except Exception as e:
     print "Could not connect to server. Please try another port number."
     print e
@@ -100,7 +124,6 @@ while (conn == 0) and (client == 0):
     try:
         # client is the server's response variable 'address'
         print "Could not connect to server. Attempting again..."
-        sleep(2)
         conn, client = register_client()
     except Exception as e:
         print "Could not connect to server. Please try another port number."
@@ -112,16 +135,33 @@ def listentoUDP():
     with mutex:
         try:
             udpsock.settimeout(server_timeout)
-            udpsock.recv(1024)
+            resp = udpsock.recv(1024)
         except Exception as e:
-            print "Nothing from udpsock"
+            return False
 def listentoSVR():
     with mutex:
         try:
             serversock.settimeout(server_timeout)
-            serversock.recv(1024)
+            resp = serversock.recv(1024)
         except Exception as e:
-            print "Nothing from serversock"
+            return False
 
-#p = Process(target = listentoUDP)
+def listentoConn():
+    with mutex:
+        try:
+            conn.settimeout(server_timeout)
+            resp = conn.recv(1024)
+        except Exception as e:
+            return False
+    for i in range(len(resp)):
+        print repr(resp[i])
+
+def listen(n):
+    for i in range(n):
+        #listentoUDP()
+        #listentoSVR()
+        listentoConn()
+
+
+p = Process(target = listen, args = (5,))
 #p.start()
