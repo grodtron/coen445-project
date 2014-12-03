@@ -41,18 +41,15 @@ public class Item implements Runnable{
 		biddingSessions = new ArrayList<BiddingSession>();
 	}
 
-	@Override
-	public void run() {
-		
+	
+	private void scheduleTimeout(){
 		new Timer().schedule(new TimerTask() {
 			@Override public void run() {
 				System.out.println("Removing Item with port #" + socket.getLocalPort());
 				
 				synchronized(Item.this){
 					for (BiddingSession biddingSession : Item.this.biddingSessions) {
-						if(highBidder == null){
-							Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
-						}else{
+						if(highBidder != null){
 							if(biddingSession.getUser().equals(highBidder)){
 								biddingSession.addToOutbox(new WinMessage(socket.getLocalPort(), sellingUser, Registrar.instance.getAddress(sellingUser), currentBid));
 							}else{
@@ -68,16 +65,18 @@ public class Item implements Runnable{
 					}
 					
 					if(highBidder == null){
-						try {
-							Item.this.socket.close();
-							biddingSessions = null;
-						} catch (IOException e) {
-							System.err.println("Couldn't close Item server socket: " + e);
-						}
+						Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
+						Item.this.scheduleTimeout();
 					}
 				}
 			}
 		}, 2 * 60 * 1000);
+	}
+	
+	@Override
+	public void run() {		
+		
+		scheduleTimeout();
 		
 		while(true){
 			Socket sock;

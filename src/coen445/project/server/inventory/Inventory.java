@@ -3,7 +3,7 @@ package coen445.project.server.inventory;
 import java.io.IOException;
 
 public class Inventory {
-
+	
 	public Inventory(){
 	}
 	
@@ -22,6 +22,8 @@ public class Inventory {
 		System.out.println("Adding new item with #" + itemId);
 		
 		new Thread(item).start();
+		
+		
 		
 		return itemId;
 	}

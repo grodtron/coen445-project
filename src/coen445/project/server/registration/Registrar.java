@@ -5,12 +5,10 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import coen445.project.common.tcp.SoldtoMessage;
 import coen445.project.common.tcp.TcpMessage;
 
 public class Registrar {
