@@ -31,12 +31,16 @@ public class Item implements Runnable{
 	
 	private Collection<BiddingSession> biddingSessions;
 	
-	public Item(String description, String sellingUser, int startingBid) throws IOException{
+	private Inventory inventory;
+	
+	public Item(String description, String sellingUser, int startingBid, Inventory inventory) throws IOException{
 		this.description = description;
 		this.socket      = new ServerSocket(0);
 		this.currentBid  = startingBid - 1; // because the starting bid itself is also acceptable
 		this.highBidder  = null;
 		this.sellingUser = sellingUser;
+		
+		this.inventory = inventory;
 		
 		biddingSessions = new ArrayList<BiddingSession>();
 	}
@@ -67,6 +71,15 @@ public class Item implements Runnable{
 					if(highBidder == null){
 						Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
 						Item.this.scheduleTimeout();
+					}else{
+						
+						inventory.done(Item.this);
+						
+						try {
+							Item.this.socket.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -130,5 +143,10 @@ public class Item implements Runnable{
 			biddingSession.addToOutbox(msg);
 		}
 		
+	}
+
+
+	public String getUser() {
+		return sellingUser;
 	}
 }

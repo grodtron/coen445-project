@@ -64,6 +64,9 @@ public class RegisterAndOfferServerContext extends UdpContext {
 		}else
 		if( ! registeredAddress.equals(msg.getAddress()) ){
 			return Collections.singleton(new DeregDeniedMessage(msg, DeregDeniedMessage.Reason.NOT_REGISTERED_AT_ADDRESS));
+		}else
+		if(! inventory.canDeregister(name)){
+			return Collections.singleton(new DeregDeniedMessage(msg, DeregDeniedMessage.Reason.SELLING_ITEMS));
 		}else{
 			Registrar.instance.remove(name);
 			return Collections.singleton(new DeregConfMessage(msg));

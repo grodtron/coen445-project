@@ -10,6 +10,7 @@ public class DeregDeniedMessage extends UdpMessage {
 		NOT_REGISTERED,
 		ADDRESS_MISMATCH,
 		NOT_REGISTERED_AT_ADDRESS,
+		SELLING_ITEMS,
 		UNKNOWN;
 		
 		public static Reason get(byte code){
