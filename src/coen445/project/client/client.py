@@ -76,13 +76,11 @@ def deregister():
             print e
 
 def offer(item,price):
-    offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01'+ chr(len(item)) +item+chr(int(hex(price),16))+'\n'
+    offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01'+ chr(len(item)) +item+chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
     with mutex:
         udpsock.sendto(offer, address)
         offerconf = udpsock.recv(1024)
-    port = 256*ord(offerconf[2]) + ord(offerconf[3])
-    with auction_mutex:
-        auction.append([item,port,price,0])
+        print 256*ord(offerconf[2]) + ord(offerconf[3])
     return True
 
 def bid(item, price):
@@ -153,8 +151,18 @@ def listentoConn():
             resp = conn.recv(1024)
         except Exception as e:
             return False
-    for i in range(len(resp)):
-        print repr(resp[i])
+    #for i in range(len(resp)):
+        #print repr(resp[i])
+    if ord(resp[0]) == 8:
+        print "New item!"
+        port = 256*ord(resp[1]) + ord(resp[2])
+        description = resp[4:4+ord(resp[3])]
+        price = 256*ord(resp[-4])+ord(resp[-3])
+        #print port
+        #print description
+        #print price
+        with auction_mutex:
+            auction.append([description,port,price,0])
 
 def listen(n):
     for i in range(n):
