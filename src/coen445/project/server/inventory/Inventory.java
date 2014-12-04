@@ -55,8 +55,15 @@ public class Inventory {
 	
 	public boolean canDeregister(String user){
 		Set<Item> items = pendingItems.get(user);
-		System.out.println("can Deregister? " + (items != null) + " " + items.size());
 		return items == null || items.size() == 0;
+	}
+
+	public Set<Item> getPendingItems() {
+		Set<Item> items = new HashSet<Item>();
+		for(Set<Item> item : pendingItems.values()){
+			items.addAll(item);
+		}
+		return items;
 	}
 	
 }

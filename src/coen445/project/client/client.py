@@ -249,49 +249,56 @@ def listentoConn():
     #print "Received Conn message:"
     print repr(resp)
     try:
-        if ord(resp[0]) == 8:
-            port = 256*ord(resp[1]) + ord(resp[2])
-            description = resp[4:4+ord(resp[3])]
-            price = 256*ord(resp[-4])+ord(resp[-3])
-            auction_mutex.acquire()
-            for i in range(len(auction)):
-                if auction[i][1] == port:
-                    auction_mutex.release()
-                    return False
-                if auction[i][0] == description:
-                    auction_mutex.release()
-                    return False
-            auction_mutex.release()
-            #print port
-            #print description
-            #print price
-            itemsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            itemsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            itemsock.bind((client_IP,localport))
-            itemsock.connect((IP,port))
-            auction_mutex.acquire()
-            print "New item!"
-            auction.append([description,port,price,0,itemsock])
-            auction_mutex.release()
-        elif ord(resp[0]) == 2:
-            #Someone else won the item
-            name = resp[4:4+ord(resp[3])]
-            port = 256*ord(resp[1]) + ord(resp[2])
-            auction_mutex.acquire()
-            for i in range(len(auction)):
-                if auction[i][1] == port:
-                    item = auction[i][0]
-            auction_mutex.release()
-            try:
-                print name + " won the item: " + item + "!"
-            except:
-                print name + " won an item!"
-            remove_ID(port)
-        elif ord(resp[0]) == 1:
-            print "Someone bidded on an item!"
-            port = 256*ord(resp[1]) + ord(resp[2])
-            price = 256*ord(resp[3]) + ord(resp[4])
-            update_ID(port,price)
+		while len(resp) > 0:
+			if ord(resp[0]) == 8:
+				port = 256*ord(resp[1]) + ord(resp[2])
+				description_end = 4+ord(resp[3])
+				description = resp[4:description_end]
+				price = 256*ord(resp[description_end])+ord(resp[description_end + 1])
+				auction_mutex.acquire()
+				for i in range(len(auction)):
+					if auction[i][1] == port:
+						auction_mutex.release()
+						return False
+					if auction[i][0] == description:
+						auction_mutex.release()
+						return False
+				auction_mutex.release()
+				#print port
+				#print description
+				#print price
+				itemsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				itemsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+				itemsock.bind((client_IP,localport))
+				itemsock.connect((IP,port))
+				auction_mutex.acquire()
+				print "New item!"
+				auction.append([description,port,price,0,itemsock])
+				auction_mutex.release()
+				resp = resp[description_end + 4:]
+			elif ord(resp[0]) == 2:
+				#Someone else won the item
+				name = resp[4:4+ord(resp[3])]
+				port = 256*ord(resp[1]) + ord(resp[2])
+				auction_mutex.acquire()
+				for i in range(len(auction)):
+					if auction[i][1] == port:
+						item = auction[i][0]
+				auction_mutex.release()
+				try:
+					print name + " won the item: " + item + "!"
+				except:
+					print name + " won an item!"
+				remove_ID(port)
+				resp = ""
+			elif ord(resp[0]) == 1:
+				print "Someone bidded on an item!"
+				port = 256*ord(resp[1]) + ord(resp[2])
+				price = 256*ord(resp[3]) + ord(resp[4])
+				update_ID(port,price)
+				resp = ""
+			else:
+				resp = ""
     except Exception as e:
         print e
         print "Fatal failure. Exiting..."

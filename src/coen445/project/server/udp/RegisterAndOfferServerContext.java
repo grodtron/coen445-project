@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import coen445.project.common.tcp.NewItemMessage;
 import coen445.project.common.udp.DeregConfMessage;
@@ -21,6 +22,7 @@ import coen445.project.common.udp.UdpContext;
 import coen445.project.common.udp.UdpMessage;
 import coen445.project.common.udp.UnregisteredMessage;
 import coen445.project.server.inventory.Inventory;
+import coen445.project.server.inventory.Item;
 import coen445.project.server.registration.Registrar;
 
 public class RegisterAndOfferServerContext extends UdpContext {
@@ -42,6 +44,12 @@ public class RegisterAndOfferServerContext extends UdpContext {
 			return Collections.singleton(new UnregisteredMessage(msg, UnregisteredMessage.Reason.ADDRESS_MISMATCH));
 		}else{
 			if(Registrar.instance.register(name, msg.getAddress())){
+				Set<Item> items = inventory.getPendingItems();
+								
+				for(Item item : items){
+					Registrar.instance.informUser(name, new NewItemMessage(item.getId(), item.getDescription(), item.getHighBid()));
+				}				
+				
 				return Collections.singleton(new RegisteredMessage(msg));
 			}else{
 				return Collections.emptySet();

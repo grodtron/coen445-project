@@ -12,7 +12,7 @@ public class SoldtoMessage extends TcpMessage {
 		
 		data = new byte[ 1 + 2 + 1 + sellerNameBytes.length + 4 + 2 + 2 ];
 		
-		data[0] = (byte) TcpMessage.OpCodes.WIN.ordinal();
+		data[0] = (byte) TcpMessage.OpCodes.SOLDTO.ordinal();
 		data[1] = (byte) (0xff & (itemNumber>>8));
 		data[2] = (byte) (0xff & itemNumber);
 		
@@ -32,6 +32,8 @@ public class SoldtoMessage extends TcpMessage {
 		
 		data[6 + 4 + sellerNameBytes.length] = (byte) (0xff & (amount >> 8));
 		data[7 + 4 + sellerNameBytes.length] = (byte) (0xff & amount);
+	
+		System.out.println("New soldto message!");
 		
  	}
 	

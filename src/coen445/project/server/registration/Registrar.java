@@ -6,6 +6,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,6 +86,7 @@ public class Registrar {
 
 	public void informAll(TcpMessage msg) {
 		byte [] bytes = msg.getData();
+		List<String> badClients = new LinkedList<String>();
 		for(String client : ConnectedClientSockets.keySet()){
 			Socket clientSocket = ConnectedClientSockets.get(client);
 			try{
@@ -91,8 +94,11 @@ public class Registrar {
 				stream.write(bytes);
 				stream.flush();
 			}catch(IOException e){
-				remove(client);
+				badClients.add(client);
 			}
+		}
+		for(String client : badClients){
+			ConnectedClientSockets.remove(client);
 		}
 		
 	}
@@ -106,6 +112,7 @@ public class Registrar {
 			stream.write(bytes);
 			stream.flush();
 		}catch(IOException e){
+			System.err.println("Can't inform user, removing: " + e);
 			remove(client);
 		}
 	}

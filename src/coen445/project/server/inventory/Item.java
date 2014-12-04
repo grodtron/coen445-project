@@ -59,20 +59,18 @@ public class Item implements Runnable{
 							}else{
 								biddingSession.addToOutbox(new BidOverMessage(socket.getLocalPort(), currentBid));
 							}
-							
-							if(biddingSession.getUser().equals(sellingUser)){
-								Registrar.instance.informUser(sellingUser, new SoldtoMessage(socket.getLocalPort(), highBidder, Registrar.instance.getAddress(sellingUser), currentBid));
-							}
-							
+														
 							biddingSession.close();
 						}
 					}
+					
 					
 					if(highBidder == null){
 						Registrar.instance.informAll(new NewItemMessage(socket.getLocalPort(), description, currentBid));
 						Item.this.scheduleTimeout();
 					}else{
 						
+						Registrar.instance.informUser(sellingUser, new SoldtoMessage(socket.getLocalPort(), highBidder, Registrar.instance.getAddress(sellingUser), currentBid));
 						inventory.done(Item.this);
 						
 						try {
@@ -148,5 +146,15 @@ public class Item implements Runnable{
 
 	public String getUser() {
 		return sellingUser;
+	}
+
+
+	public String getDescription() {
+		return description;
+	}
+
+
+	public int getHighBid() {
+		return currentBid;
 	}
 }
