@@ -12,6 +12,8 @@ except:
     try:
         localport = int(raw_input("Please enter a valid port number between 1025 and 65535: "))
         username = raw_input("Please enter a valid username: ")
+        print "Please enter a valid IP addres"
+        IP = raw_input("Address must be of the form xx.xx.xx.xx: ")
     except:
         print "Invalid localport/username combination. Exiting..."
         exit()
@@ -21,7 +23,42 @@ if localport > 0xFFFF or localport < 1024:
     exit()
 
 server_timeout = 1
-IP = 'localhost'
+
+##Magic starts here
+if os.name != "nt":
+    import fcntl
+    import struct
+
+    def get_interface_ip(ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s',
+                                ifname[:15]))[20:24])
+
+def get_lan_ip():
+    ip = socket.gethostbyname(socket.gethostname())
+    if ip.startswith("127.") and os.name != "nt":
+        interfaces = [
+            "eth0",
+            "eth1",
+            "eth2",
+            "wlan0",
+            "wlan1",
+            "wifi0",
+            "ath0",
+            "ath1",
+            "ppp0",
+            ]
+        for ifname in interfaces:
+            try:
+                ip = get_interface_ip(ifname)
+                break
+            except IOError:
+                pass
+    return ip
+client_IP = get_lan_ip()
+
+##Magic ends here
+
 
 udpsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 #tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,9 +67,9 @@ serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-udpsock.bind((IP, localport))
+udpsock.bind((client_IP, localport))
 #tcpsock.bind((IP, localport))
-serversock.bind((IP, localport))
+serversock.bind((client_IP, localport))
 
 serversock.listen(1)
 
@@ -45,7 +82,7 @@ mutex = threading.Lock()
 auction_mutex = threading.Lock()
 
 def register():
-    register = b'\x04\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01' + chr(int(hex(localport)[2:][-4:-2],16)) + chr(int(hex(localport)[2:][-2:],16))
+    register = b'\x04\x00' + chr(len(username)) + username + chr(int(client_IP.split(".")[0]))+ chr(int(client_IP.split(".")[1]))+ chr(int(client_IP.split(".")[2]))+ chr(int(client_IP.split(".")[3]))+ chr(int(hex(localport)[2:][-4:-2],16)) + chr(int(hex(localport)[2:][-2:],16))
     mutex.acquire()
     udpsock.settimeout(server_timeout)
     udpsock.sendto(register, address)
@@ -66,7 +103,7 @@ def register():
     return s
 
 def deregister():
-    register = b'\x02\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01' + chr(int(hex(localport)[2:4],16)) + chr(int(hex(localport)[4:6],16))
+    register = b'\x02\x00' + chr(len(username)) + username + chr(int(client_IP.split(".")[0]))+ chr(int(client_IP.split(".")[1]))+ chr(int(client_IP.split(".")[2]))+ chr(int(client_IP.split(".")[3])) + chr(int(hex(localport)[2:4],16)) + chr(int(hex(localport)[4:6],16))
     udpsock.sendto(register, address)
 
     mutex.acquire()
@@ -77,7 +114,10 @@ def deregister():
         print "Error while deregistering."
         print e
     mutex.release()
-    print repr(response)
+    try:
+        print repr(response)
+    except:
+        exit()
     if ord(response[0]) == 0:
         print "Deregistering success! Exiting..."
         exit()
@@ -85,7 +125,7 @@ def deregister():
         print "Deregistering denied!"
 
 def offer(item,price):
-    offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01'+ chr(len(item)) +item+chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
+    offer    = b'\x06\x00' + chr(len(username)) + username + chr(int(client_IP.split(".")[0]))+ chr(int(client_IP.split(".")[1]))+ chr(int(client_IP.split(".")[2]))+ chr(int(client_IP.split(".")[3])) + chr(len(item)) +item+chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
     mutex.acquire()
     try:
         udpsock.sendto(offer, address)
@@ -99,9 +139,9 @@ def offer(item,price):
 def bid(item, price):
     for i in range(len(auction)):
         if auction[i][0] == item:
-            offer    = b'\x00\0\0'+ chr(int(hex(auction[i][1])[-4:-2].zfill(1),16))+chr(int(hex(auction[i][1])[-2:].zfill(1),16)) + chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
-            print "Printing offer"
-            print repr(offer)
+            offer    = b'\x00\0\0'+ chr(int(hex(auction[i][1])[2:][-4:-2].zfill(1),16))+chr(int(hex(auction[i][1])[2:][-2:].zfill(1),16)) + chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
+            #print "Printing offer"
+            #print repr(offer)
             mutex.acquire()
             print "Acquired mutex!"
             #auction[i][4].connect((IP,auction[i][1]))
@@ -114,8 +154,8 @@ def bid(item, price):
                 #tcpsock.close()
                 mutex.release()
             except Exception as e:
-                print "Error in bidding"
-                print e
+                #print "Error in bidding"
+                #print e
                 #tcpsock.close()
                 mutex.release()
                 return False
@@ -213,17 +253,21 @@ def listentoConn():
             port = 256*ord(resp[1]) + ord(resp[2])
             description = resp[4:4+ord(resp[3])]
             price = 256*ord(resp[-4])+ord(resp[-3])
+            auction_mutex.acquire()
             for i in range(len(auction)):
                 if auction[i][1] == port:
+                    auction_mutex.release()
                     return False
                 if auction[i][0] == description:
+                    auction_mutex.release()
                     return False
+            auction_mutex.release()
             #print port
             #print description
             #print price
             itemsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             itemsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            itemsock.bind((IP,localport))
+            itemsock.bind((client_IP,localport))
             itemsock.connect((IP,port))
             auction_mutex.acquire()
             print "New item!"
@@ -233,10 +277,15 @@ def listentoConn():
             #Someone else won the item
             name = resp[4:4+ord(resp[3])]
             port = 256*ord(resp[1]) + ord(resp[2])
+            auction_mutex.acquire()
             for i in range(len(auction)):
                 if auction[i][1] == port:
                     item = auction[i][0]
-            print name + " won the item: " + item + "!"
+            auction_mutex.release()
+            try:
+                print name + " won the item: " + item + "!"
+            except:
+                print name + " won an item!"
             remove_ID(port)
         elif ord(resp[0]) == 1:
             print "Someone bidded on an item!"
