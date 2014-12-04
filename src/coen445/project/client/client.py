@@ -20,7 +20,7 @@ if localport > 0xFFFF or localport < 1024:
     print "Bad port number. Please try again. Exiting..."
     exit()
 
-server_timeout = 2
+server_timeout = 1
 IP = 'localhost'
 
 udpsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -41,7 +41,6 @@ address = (IP, 12358)
 auction = []
 # example of adding an item 
     # auction.append([$description,$port,$current_bid,$client_bid,$itemsock])
-loop = True
 mutex = threading.Lock()
 auction_mutex = threading.Lock()
 
@@ -74,14 +73,16 @@ def deregister():
     try:
         udpsock.settimeout(server_timeout)
         response = udpsock.recv(1024)
-        print repr(response)
-        print "Deregistering success! Exiting..."
-        loop = False
-        exit()
     except Exception as e:
         print "Error while deregistering."
         print e
     mutex.release()
+    print repr(response)
+    if ord(response[0]) == 0:
+        print "Deregistering success! Exiting..."
+        exit()
+    elif ord(response[0])==1:
+        print "Deregistering denied!"
 
 def offer(item,price):
     offer    = b'\x06\x00' + chr(len(username)) + username + b'\x7f\x00\x00\x01'+ chr(len(item)) +item+chr(int(hex(price)[2:][-4:-2].zfill(1),16))+chr(int(hex(price)[2:][-2:].zfill(1),16))
@@ -158,7 +159,6 @@ try:
 except Exception as e:
     print "Could not connect to server. Please try another port number."
     print e
-    loop = False
     exit()
 
 # If connection fails, sleep 2 seconds and try again. Eventually exit if 
@@ -171,7 +171,6 @@ while (conn == 0) and (client == 0):
     except Exception as e:
         print "Could not connect to server. Please try another port number."
         print e
-        loop = False
         exit()
 
 def listentoUDP():
@@ -218,7 +217,6 @@ def listentoConn():
                 if auction[i][1] == port:
                     return False
                 if auction[i][0] == description:
-                    print "There exists an item with the same name. Please enter another name."
                     return False
             #print port
             #print description
@@ -247,6 +245,8 @@ def listentoConn():
             update_ID(port,price)
     except Exception as e:
         print e
+        print "Fatal failure. Exiting..."
+        exit()
         
 
 def listentoAuctions():
@@ -279,6 +279,11 @@ def listentoAuctions():
             item = auction[i][0]
             print "Congratulations! You won the item: " + item + " from seller: " + name + "!"
             remove_ID(port)
+        elif ord(resp[0]) == 3:
+            port = 256*ord(resp[1]) + ord(resp[2])
+            item = auction[i][0]
+            print "Auction for item: " + item + " over!"
+            remove_ID(port)
 
 def check_pid(pid):        
     # Check For the existence of a unix pid.
@@ -289,13 +294,14 @@ def check_pid(pid):
     else:
         return True
 
-def listen(pid):
-    while check_pid(pid):
+def listen():
+    while True:
         listentoUDP()
         #listentoSVR()
         listentoConn()
         listentoAuctions()
 
 
-p = threading.Thread(target = listen, args = (os.getpid(),))
+p = threading.Thread(target = listen)
+p.daemon = True
 p.start()
