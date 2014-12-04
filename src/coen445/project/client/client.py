@@ -246,7 +246,7 @@ def listentoConn():
 
     #for i in range(len(resp)):
         #print repr(resp[i])
-    print "Received Conn message:"
+    #print "Received Conn message:"
     print repr(resp)
     try:
         if ord(resp[0]) == 8:
@@ -349,6 +349,10 @@ def listen():
         #listentoSVR()
         listentoConn()
         listentoAuctions()
+
+def display():
+    for i in range(len(auction)):
+        print auction[i][0]
 
 
 p = threading.Thread(target = listen)
