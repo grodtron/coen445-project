@@ -30,11 +30,15 @@ public class Inventory {
 		
 		new Thread(item).start();
 		
+		System.out.println("Adding Item...");
 		Set<Item> items = pendingItems.get(user);
 		if(items == null){
-			pendingItems.put(user, new HashSet<Item>());
+			System.out.println("  creating items hashset...");
+			items = new HashSet<Item>();
+			pendingItems.put(user, items);
 		}
 		items.add(item);
+		System.out.println("  adding item to set, there are now: " + items.size() + " elements");
 		
 		return itemId;
 	}
@@ -51,7 +55,8 @@ public class Inventory {
 	
 	public boolean canDeregister(String user){
 		Set<Item> items = pendingItems.get(user);
-		return items != null || items.size() == 0;
+		System.out.println("can Deregister? " + (items != null) + " " + items.size());
+		return items == null || items.size() == 0;
 	}
 	
 }
