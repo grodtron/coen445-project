@@ -359,7 +359,7 @@ def listen():
 
 def display():
     for i in range(len(auction)):
-        print auction[i][0]
+        print "Item: " + auction[i][0] + ", price: " + auction[i][2]
 
 
 p = threading.Thread(target = listen)
