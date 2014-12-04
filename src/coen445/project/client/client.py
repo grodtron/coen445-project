@@ -143,7 +143,7 @@ def bid(item, price):
             #print "Printing offer"
             #print repr(offer)
             mutex.acquire()
-            print "Acquired mutex!"
+            #print "Acquired mutex!"
             #auction[i][4].connect((IP,auction[i][1]))
             auction[i][4].send(offer)
             try:
@@ -359,7 +359,7 @@ def listen():
 
 def display():
     for i in range(len(auction)):
-        print "Item: " + auction[i][0] + ", price: " + auction[i][2]
+        print "Item: " + auction[i][0] + ", price: " + str(auction[i][2])
 
 
 p = threading.Thread(target = listen)
